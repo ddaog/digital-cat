@@ -47,7 +47,7 @@ const palette = {
 
 // --- Wobbly Helpers ---
 
-function getWobble(points, seed, amount = 2) {
+function getWobble(points, seed, amount = 1.5) {
   // Simple deterministic pseudo-noise for wobbly lines
   return points.map((p, i) => {
     const angle = (i / points.length) * Math.PI * 2 + seed;
@@ -127,7 +127,7 @@ function resize() {
   state.cat.targetX = state.cat.baseX;
   state.cat.targetY = state.cat.baseY;
   state.churu.x = window.innerWidth * 0.5;
-  state.churu.y = window.innerHeight * 0.53;
+  state.churu.y = window.innerHeight * 0.85; // Lower on screen (monitor foreground)
 }
 
 window.addEventListener("resize", resize);
@@ -157,9 +157,9 @@ function startPayment() {
   state.payState = "approach";
   state.mode = "approach";
   state.cat.targetX = state.churu.x - 40;
-  state.cat.targetY = state.churu.y + 60;
+  state.cat.targetY = state.churu.y + 40;
   state.churu.visible = true;
-  state.message = "결제 완료!";
+  state.message = "냠냠 맛있겠다!";
   payBtn.disabled = true;
 }
 
@@ -179,7 +179,7 @@ function resetCat() {
 function update(dt) {
   state.time += dt;
   state.boilTimer += dt;
-  if (state.boilTimer > 0.1) {
+  if (state.boilTimer > 0.15) {
     state.seed = Math.random() * 100;
     state.boilTimer = 0;
   }
@@ -209,7 +209,7 @@ function update(dt) {
     const dy = state.cat.targetY - state.cat.y;
     const dist = Math.hypot(dx, dy);
     const speed = 120;
-    if (dist > 2) {
+    if (dist > 5) {
       const step = Math.min(dist, speed * dt);
       state.cat.x += (dx / dist) * step;
       state.cat.y += (dy / dist) * step;
@@ -218,19 +218,30 @@ function update(dt) {
       state.payState = "eat";
       state.mode = "eat";
       state.eatTimer = 0;
+      state.message = "쩝쩝쩝... 너무 맛있어!";
     }
   } else if (state.payState === "eat") {
     state.eatTimer += dt;
-    state.cat.stepPhase += dt * 6;
-    if (state.eatTimer > 2.2) {
-      state.payState = "vanish";
-      state.mode = "vanish";
-      state.vanishTimer = 0;
+    state.cat.stepPhase += dt * 4;
+    if (state.eatTimer > 10) {
+      state.payState = "return";
+      state.mode = "watch";
+      state.cat.targetX = state.cat.baseX;
+      state.cat.targetY = state.cat.baseY;
+      state.message = "잘 먹었다! 기분 최고야.";
+      state.churu.visible = false;
     }
-  } else if (state.payState === "vanish") {
-    state.vanishTimer += dt;
-    state.cat.opacity = Math.max(0, 1 - state.vanishTimer * 1.4);
-    if (state.cat.opacity <= 0.02) {
+  } else if (state.payState === "return") {
+    const dx = state.cat.targetX - state.cat.x;
+    const dy = state.cat.targetY - state.cat.y;
+    const dist = Math.hypot(dx, dy);
+    const speed = 100;
+    if (dist > 5) {
+      const step = Math.min(dist, speed * dt);
+      state.cat.x += (dx / dist) * step;
+      state.cat.y += (dy / dist) * step;
+      state.cat.stepPhase += dt * 6;
+    } else {
       resetCat();
     }
   } else {
