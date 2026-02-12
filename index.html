@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>디지털 길고양이</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="ui">
+    <div id="title">디지털 길고양이</div>
+    <button id="pay-btn" type="button">츄르 사주기 · $0.99</button>
+  </div>
+
+  <div id="modal" class="hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-title">간편 결제</div>
+      <div class="modal-desc">츄르 한 개 · $0.99</div>
+      <button id="confirm-btn" type="button">결제하기</button>
+      <button id="cancel-btn" type="button" class="ghost">취소</button>
+    </div>
+  </div>
+
+  <canvas id="game"></canvas>
+  <script src="app.js"></script>
+</body>
+</html>

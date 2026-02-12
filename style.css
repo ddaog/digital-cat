@@ -1,0 +1,131 @@
+:root {
+  --paper: #f5efe3;
+  --ink: #3d3a33;
+  --accent: #f3a6b4;
+  --accent-2: #f7d07a;
+  --shadow: rgba(61, 58, 51, 0.15);
+  --glass: rgba(255, 255, 255, 0.7);
+  --button: #f4c3c7;
+  --button-hover: #f0b1b8;
+  --font: "Baloo 2", "Gowun Dodum", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--paper);
+  font-family: var(--font);
+  color: var(--ink);
+}
+
+#game {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+
+#ui {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 5;
+}
+
+#title {
+  padding: 10px 16px;
+  background: var(--glass);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 0 6px 0 var(--shadow);
+  letter-spacing: 0.5px;
+}
+
+#pay-btn {
+  padding: 12px 18px;
+  border-radius: 16px;
+  border: 2px solid var(--ink);
+  background: var(--button);
+  color: var(--ink);
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 6px 0 var(--shadow);
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+#pay-btn:hover {
+  background: var(--button-hover);
+  transform: translateY(-1px);
+}
+
+#pay-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+#modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(245, 239, 227, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+#modal.hidden {
+  display: none;
+}
+
+.modal-card {
+  width: min(320px, 90vw);
+  padding: 24px;
+  border-radius: 24px;
+  background: #fffdf9;
+  border: 2px solid var(--ink);
+  box-shadow: 0 12px 0 var(--shadow);
+  display: grid;
+  gap: 12px;
+  text-align: center;
+}
+
+.modal-title {
+  font-size: 20px;
+}
+
+.modal-desc {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+#confirm-btn,
+#cancel-btn {
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 2px solid var(--ink);
+  background: var(--accent-2);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 15px;
+}
+
+#cancel-btn.ghost {
+  background: #fff;
+}
+
+@media (max-width: 600px) {
+  #ui {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
