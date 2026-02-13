@@ -156,10 +156,10 @@ function startPayment() {
   if (state.payState !== "idle") return;
   state.payState = "approach";
   state.mode = "approach";
-  state.cat.targetX = state.churu.x - 40;
-  state.cat.targetY = state.churu.y + 40;
+  state.cat.targetX = state.churu.x + 55; // Align head (at -bodyW*0.35) to Churu X
+  state.cat.targetY = state.churu.y + 15; // Align mouth to Churu top
   state.churu.visible = true;
-  state.message = "냠냠 맛있겠다!";
+  state.message = "맛있겠다...";
   payBtn.disabled = true;
 }
 
@@ -218,17 +218,25 @@ function update(dt) {
       state.payState = "eat";
       state.mode = "eat";
       state.eatTimer = 0;
-      state.message = "쩝쩝쩝... 너무 맛있어!";
+      state.message = "맛있다...";
     }
   } else if (state.payState === "eat") {
     state.eatTimer += dt;
     state.cat.stepPhase += dt * 4;
+
+    // Message sequence during eating
+    if (state.eatTimer > 4 && state.eatTimer < 7) {
+      state.message = "기분 좋다...";
+    } else if (state.eatTimer > 7) {
+      state.message = "또 먹고 싶다...";
+    }
+
     if (state.eatTimer > 10) {
       state.payState = "return";
       state.mode = "watch";
       state.cat.targetX = state.cat.baseX;
       state.cat.targetY = state.cat.baseY;
-      state.message = "잘 먹었다! 기분 최고야.";
+      state.message = "";
       state.churu.visible = false;
     }
   } else if (state.payState === "return") {
@@ -262,13 +270,14 @@ function drawChuru() {
   const { x, y } = state.churu;
   ctx.save();
   ctx.translate(x, y);
-  ctx.rotate(-0.1);
+  ctx.rotate(0.05); // Slight tilt
   ctx.fillStyle = palette.churu;
   ctx.strokeStyle = palette.ink;
   ctx.lineWidth = 2.5;
 
+  // Body (Vertical)
   const bodyPoints = getWobble([
-    { x: -30, y: -8 }, { x: 30, y: -8 }, { x: 30, y: 8 }, { x: -30, y: 8 }
+    { x: -8, y: -30 }, { x: 8, y: -30 }, { x: 8, y: 30 }, { x: -8, y: 30 }
   ], state.seed);
 
   ctx.beginPath();
@@ -278,12 +287,13 @@ function drawChuru() {
   ctx.fill();
   ctx.stroke();
 
+  // Edge/Tear part at the top
   ctx.fillStyle = palette.churuEdge;
   ctx.beginPath();
-  ctx.moveTo(bodyPoints[1].x, bodyPoints[1].y);
-  ctx.lineTo(bodyPoints[1].x - 15, bodyPoints[1].y);
-  ctx.lineTo(bodyPoints[2].x - 15, bodyPoints[2].y);
-  ctx.lineTo(bodyPoints[2].x, bodyPoints[2].y);
+  ctx.moveTo(bodyPoints[0].x, bodyPoints[0].y);
+  ctx.lineTo(bodyPoints[0].x, bodyPoints[0].y + 15);
+  ctx.lineTo(bodyPoints[1].x, bodyPoints[1].y + 15);
+  ctx.lineTo(bodyPoints[1].x, bodyPoints[1].y);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
