@@ -156,8 +156,8 @@ function startPayment() {
   if (state.payState !== "idle") return;
   state.payState = "approach";
   state.mode = "approach";
-  state.cat.targetX = state.churu.x + 55; // Align head (at -bodyW*0.35) to Churu X
-  state.cat.targetY = state.churu.y + 15; // Align mouth to Churu top
+  state.cat.targetX = state.churu.x + 49; // Align mouth (at -49) to Churu X
+  state.cat.targetY = state.churu.y - 10; // Moved another 10px higher
   state.churu.visible = true;
   state.message = "맛있겠다...";
   payBtn.disabled = true;
@@ -427,12 +427,28 @@ function drawCat() {
   ctx.arc(gaze.x * 0.5, eyeY + 15 + gaze.y * 0.5, 4, 0, Math.PI * 2);
   ctx.fill();
 
-  // Mouth (w)
+  // Mouth (w) and Tongue
+  const mx = 0, my = eyeY + 18;
+
+  if (state.mode === "eat") {
+    // Licking tongue
+    const lick = Math.max(0, Math.sin(state.eatTimer * 20));
+    ctx.save();
+    ctx.fillStyle = palette.pink;
+    ctx.beginPath();
+    // Small pink ellipse for tongue
+    ctx.ellipse(mx, my + 2 + lick * 12, 6, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = palette.ink;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+  }
+
   ctx.lineWidth = 3;
   ctx.beginPath();
-  const mx = 0, my = eyeY + 18;
   ctx.moveTo(-10, my);
-  ctx.quadraticCurveTo(-5, my + 8, 0, my);
+  ctx.quadraticCurveTo(-5, my + 8, mx, my);
   ctx.quadraticCurveTo(5, my + 8, 10, my);
   ctx.stroke();
 
