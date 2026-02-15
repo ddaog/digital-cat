@@ -512,8 +512,8 @@ function drawMessage() {
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawBackground();
-  drawChuru();
   drawCat();
+  drawChuru();
   drawMessage();
 }
 
