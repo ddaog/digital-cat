@@ -431,17 +431,37 @@ function drawCat() {
   const mx = 0, my = eyeY + 18;
 
   if (state.mode === "eat") {
-    // Licking tongue
-    const lick = Math.max(0, Math.sin(state.eatTimer * 20));
+    // Natural snapping lick animation
+    const lickCycle = state.eatTimer * 22;
+    const lickForm = Math.max(0, Math.sin(lickCycle));
+    const lickSnap = Math.pow(lickForm, 0.6); // Snappier out-and-in
+
     ctx.save();
+    ctx.translate(mx, my + 2);
+    ctx.rotate(Math.sin(lickCycle) * 0.1); // Slight side-to-side lap
+
     ctx.fillStyle = palette.pink;
-    ctx.beginPath();
-    // Small pink ellipse for tongue
-    ctx.ellipse(mx, my + 2 + lick * 12, 6, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
     ctx.strokeStyle = palette.ink;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.8;
+
+    // Tongue shape (U-shaped and stretchy)
+    const tw = 7, th = 10 + lickSnap * 15;
+    ctx.beginPath();
+    ctx.moveTo(-tw, 0);
+    ctx.lineTo(-tw, th - 5);
+    ctx.quadraticCurveTo(-tw, th, 0, th);
+    ctx.quadraticCurveTo(tw, th, tw, th - 5);
+    ctx.lineTo(tw, 0);
+    ctx.fill();
     ctx.stroke();
+
+    // Central groove detail
+    ctx.beginPath();
+    ctx.lineWidth = 1.2;
+    ctx.moveTo(0, th * 0.3);
+    ctx.lineTo(0, th * 0.8);
+    ctx.stroke();
+
     ctx.restore();
   }
 
