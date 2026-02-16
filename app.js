@@ -169,7 +169,7 @@ async function startPayment() {
       // Store state or session if needed, then redirect
       window.location.href = data.next_redirect_pc_url;
     } else {
-      alert('결제 준비 중 오류가 발생했습니다.');
+      alert('결제 준비 중 오류가 발생했습니다: ' + (data.details ? JSON.stringify(data.details) : '알 수 없는 오류'));
     }
   } catch (error) {
     console.error('Payment Error:', error);
