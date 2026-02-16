@@ -21,6 +21,7 @@ let tid = '';
 // 1. Payment Ready
 app.post('/api/payment/ready', async (req, res) => {
     try {
+        const baseUrl = (process.env.BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
         const response = await axios.post(
             'https://open-api.kakaopay.com/online/v1/payment/ready',
             {
@@ -31,9 +32,9 @@ app.post('/api/payment/ready', async (req, res) => {
                 quantity: 1,
                 total_amount: 1000,
                 tax_free_amount: 0,
-                approval_url: `${process.env.BASE_URL || `http://localhost:${PORT}`}/api/payment/success`,
-                fail_url: `${process.env.BASE_URL || `http://localhost:${PORT}`}/api/payment/fail`,
-                cancel_url: `${process.env.BASE_URL || `http://localhost:${PORT}`}/api/payment/cancel`,
+                approval_url: `${baseUrl}/api/payment/success`,
+                fail_url: `${baseUrl}/api/payment/fail`,
+                cancel_url: `${baseUrl}/api/payment/cancel`,
             },
             {
                 headers: {
@@ -46,8 +47,12 @@ app.post('/api/payment/ready', async (req, res) => {
         tid = response.data.tid;
         res.json(response.data);
     } catch (error) {
-        console.error('Payment Ready Error:', error.response ? error.response.data : error.message);
-        res.status(500).json({ error: 'Failed to prepare payment' });
+        const errorData = error.response ? error.response.data : { message: error.message };
+        console.error('Payment Ready Error:', JSON.stringify(errorData));
+        res.status(500).json({
+            error: 'Failed to prepare payment',
+            details: errorData
+        });
     }
 });
 
