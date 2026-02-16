@@ -166,10 +166,14 @@ async function startPayment() {
     const data = await response.json();
 
     if (data.next_redirect_pc_url) {
-      // Store state or session if needed, then redirect
-      window.location.href = data.next_redirect_pc_url;
+      // Check if mobile
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const redirectUrl = (isMobile && data.next_redirect_mobile_url) ? data.next_redirect_mobile_url : data.next_redirect_pc_url;
+
+      window.location.href = redirectUrl;
     } else {
-      alert('결제 준비 중 오류가 발생했습니다: ' + (data.details ? JSON.stringify(data.details) : '알 수 없는 오류'));
+      const detail = data.details ? JSON.stringify(data.details) : '알 수 없는 오류';
+      alert('결제 준비 중 오류가 발생했습니다: ' + detail);
     }
   } catch (error) {
     console.error('Payment Error:', error);
