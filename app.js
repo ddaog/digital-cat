@@ -152,16 +152,55 @@ confirmBtn.addEventListener("click", () => {
   startPayment();
 });
 
-function startPayment() {
+async function startPayment() {
   if (state.payState !== "idle") return;
+
+  try {
+    const response = await fetch('/api/payment/ready', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+
+    if (data.next_redirect_pc_url) {
+      // Store state or session if needed, then redirect
+      window.location.href = data.next_redirect_pc_url;
+    } else {
+      alert('결제 준비 중 오류가 발생했습니다.');
+    }
+  } catch (error) {
+    console.error('Payment Error:', error);
+    alert('서버 연결에 실패했습니다.');
+  }
+}
+
+function triggerChuruAnimation() {
   state.payState = "approach";
   state.mode = "approach";
-  state.cat.targetX = state.churu.x + 49; // Align mouth (at -49) to Churu X
-  state.cat.targetY = state.churu.y - 10; // Moved another 10px higher
+  state.cat.targetX = state.churu.x + 49;
+  state.cat.targetY = state.churu.y - 10;
   state.churu.visible = true;
   state.message = "맛있겠다...";
   payBtn.disabled = true;
 }
+
+// Check for payment status on load
+window.addEventListener('load', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const paymentStatus = urlParams.get('payment');
+
+  if (paymentStatus === 'success') {
+    triggerChuruAnimation();
+    // Clean up URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } else if (paymentStatus === 'fail' || paymentStatus === 'cancel') {
+    alert('결제가 취소되었거나 실패했습니다.');
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+});
 
 function resetCat() {
   state.payState = "idle";
