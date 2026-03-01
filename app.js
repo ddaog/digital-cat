@@ -216,6 +216,7 @@ function resetCat() {
   state.cat.targetY = state.cat.baseY;
   state.churu.visible = false;
   state.message = "";
+  state.idleSayTimer = 0; // 다음 "야옹"/"그르렁" 즉시 표시
   payBtn.disabled = false;
 }
 
@@ -297,6 +298,13 @@ function update(dt) {
     }
   } else {
     state.cat.stepPhase += dt * 2.2;
+    // 평상 시 말하기: "야옹" 또는 "그르렁"
+    if (!state.idleSayTimer || state.idleSayTimer <= 0) {
+      state.message = Math.random() < 0.5 ? "야옹" : "그르렁";
+      state.idleSayTimer = 2 + Math.random() * 4; // 2~6초 후 다음 말
+    } else {
+      state.idleSayTimer -= dt;
+    }
   }
 }
 
