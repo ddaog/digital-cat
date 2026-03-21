@@ -8,8 +8,22 @@
 </head>
 <body>
   <div id="ui">
-    <div id="title">디지털 길고양이</div>
-    <button id="pay-btn" type="button">츄르 사주기 · $0.99</button>
+    <div id="title">디지털 길고양이 골목</div>
+    <button id="explore-btn" type="button" style="background: var(--button); color: var(--ink); border: 2px solid var(--ink); border-radius: 999px; padding: 10px 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 var(--shadow);">🐾 다른 골목 방문하기</button>
+    <div id="ranking-container" class="hidden">
+      <h3>고양이 컬렉션 랭킹</h3>
+      <ul id="ranking-list"></ul>
+      <button id="close-ranking" type="button" class="ghost">닫기</button>
+    </div>
+    <button id="ranking-btn" type="button">🏆 랭킹</button>
+    <button id="pay-btn" class="hidden" type="button">츄르 사주기 · $0.99</button>
+  </div>
+
+  <div id="chat-wrapper">
+    <form id="chat-form">
+      <input id="chat-input" type="text" placeholder="고양이를 불러보세요..." autocomplete="off" />
+      <button id="chat-send" type="submit">전송</button>
+    </form>
   </div>
 
   <div id="modal" class="hidden" role="dialog" aria-modal="true">
@@ -22,6 +36,7 @@
   </div>
 
   <canvas id="game"></canvas>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
 </html>
