@@ -19,8 +19,13 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let currentUser = null;
 async function checkUser() {
-  const { data: { session } } = await supabase.auth.getSession();
-  currentUser = session?.user || null;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    currentUser = session?.user || null;
+  } catch (e) {
+    console.error("Supabase auth error:", e);
+    currentUser = null;
+  }
 }
 checkUser();
 
@@ -111,7 +116,8 @@ closeRanking.addEventListener("click", () => rankingContainer.classList.add("hid
 
 exploreBtn.addEventListener("click", () => {
   if (state.isChatDisabled) return;
-  if (Math.random() < 0.15) {
+  // Reduce chance of absence for better UX
+  if (Math.random() < 0.05) { 
     state.isCatPresent = false;
     state.catType = -1;
     state.systemMessage = "이 골목에는 고양이가 없네요...";
@@ -512,146 +518,131 @@ function drawCat() {
   ctx.scale(1 + breathing, 1 - breathing);
   if (wary > 0.2) ctx.translate(Math.sin(state.time * 50) * wary * 2, 0);
 
+  // 더 하찮고 귀여운 느낌을 위해 선을 굵게
   ctx.strokeStyle = palette.ink;
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 6;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
-  // 1. Doodle Unified Body & Head
-  const earY = earPrick * -15; 
-  const earX = wary * 10;
+  const earY = earPrick * -8; 
+  const earX = wary * 5;
   
+  // 1. 하찮은 찹쌀떡/감자 체형
   const catPts = [
-    {x: -60 - earX, y: -50 + earY}, // 0: Left Ear
-    {x: -25, y: -30},               // 1: Forehead L
-    {x: 15, y: -30},                // 2: Forehead R
-    {x: 50 + earX, y: -50 + earY},  // 3: Right Ear
-    {x: 60, y: -10},                // 4: Back of Head / Right Cheek
-    {x: 100, y: -10},               // 5: Upper Back
-    {x: 150, y: -10},               // 6: Mid Back
-    {x: 190, y: 10},                // 7: Rump
-    {x: 195, y: 35}                 // 8: Rump Bottom
+    {x: -35 - earX, y: -25 + earY}, // 왼쪽 귀
+    {x: -15, y: -15},               // 이마
+    {x: 15, y: -15},                // 이마
+    {x: 35 + earX, y: -25 + earY},  // 오른쪽 귀
+    {x: 50, y: 0},                  // 오른쪽 볼
+    {x: 65, y: 25},                 // 엉덩이
+    {x: 45, y: 45},                 // 오른쪽 바닥
+    {x: -45, y: 45},                // 왼쪽 바닥
+    {x: -60, y: 25},                // 왼쪽 몸통
+    {x: -50, y: 0}                  // 왼쪽 볼
   ];
 
-  const legY = 35, legH = 20;
-  [180, 150, 90, 60].forEach((lx, i) => {
-    let walkY = Math.sin(state.cat.stepPhase + (3-i) * 2) * 5;
+  // 짤막하고 하찮은 다리
+  const legY = 40, legH = 12;
+  [45, 20, -15, -40].forEach((lx, i) => {
+    let walkY = Math.sin(state.cat.stepPhase + (3-i) * 2) * 4;
     catPts.push({x: lx, y: legY}); 
     catPts.push({x: lx, y: legY + legH + walkY}); 
     catPts.push({x: lx - 10, y: legY + legH + walkY}); 
     catPts.push({x: lx - 10, y: legY}); 
   });
 
-  catPts.push({x: 45, y: 35});       // Chest
-  catPts.push({x: 20, y: 40});       // Right Chin
-  catPts.push({x: -20, y: 45});      // Bottom Chin
-  catPts.push({x: -55, y: 40});      // Left Chin
-  catPts.push({x: -75, y: 0});       // Left Cheek
+  const wCat = getWobble(catPts, seed, 2.0); // 더 비뚤빼뚤하게
 
-  const wCat = getWobble(catPts, seed, 1.2);
-
-  // 2. Doodle Tail
+  // 2. 하찮은 꼬리 (짧고 뭉툭하게)
   ctx.beginPath();
-  const tailStart = {x: 190, y: 10};
+  const tailStart = {x: 60, y: 25};
   if (state.cat.tail) {
     ctx.moveTo(tailStart.x, tailStart.y);
+    // 꼬리 길이 절반만 사용
     for (let i = 1; i < state.cat.tail.length; i++) {
-       ctx.lineTo(tailStart.x + state.cat.tail[i].x, tailStart.y + state.cat.tail[i].y);
+       ctx.lineTo(tailStart.x + state.cat.tail[i].x * 0.7, tailStart.y + state.cat.tail[i].y * 0.7);
     }
   }
   ctx.stroke();
 
-  // 3. Base Fill
+  // 3. 바탕 색칠
   ctx.fillStyle = getBaseColor();
   ctx.beginPath(); ctx.moveTo(wCat[0].x, wCat[0].y); wCat.forEach(p => ctx.lineTo(p.x, p.y)); ctx.closePath(); 
   ctx.fill(); ctx.stroke();
 
-  // 4. Fur Patterns
+  // 4. 하찮은 무늬
   ctx.save();
   ctx.clip(new Path2D(`M ${wCat[0].x} ${wCat[0].y} ` + wCat.map(p => `L ${p.x} ${p.y}`).join(" ")));
-  if (state.catType === 0) { // Cheese
+  if (state.catType === 0) { // 치즈
     ctx.fillStyle = palette.catCheese; 
-    ctx.beginPath(); ctx.arc(-15, -30, 45, 0, Math.PI*2); ctx.fill(); // Head patch
-    ctx.beginPath(); ctx.arc(140, 10, 45, 0, Math.PI*2); ctx.fill();  // Rump patch
-  } else if (state.catType === 1) { // Tuxedo
+    ctx.beginPath(); ctx.arc(-10, -15, 30, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(50, 20, 35, 0, Math.PI*2); ctx.fill(); 
+  } else if (state.catType === 1) { // 턱시도
     ctx.fillStyle = palette.catWhite; 
-    ctx.beginPath(); ctx.ellipse(100, 40, 60, 25, 0, 0, Math.PI*2); ctx.fill(); // Belly
-    ctx.beginPath(); ctx.arc(-15, 20, 35, 0, Math.PI*2); ctx.fill(); // Muzzle
-    // Paws
-    [180, 150, 90, 60].forEach((lx, i) => {
-      let walkY = Math.sin(state.cat.stepPhase + (3-i) * 2) * 5;
-      ctx.fillRect(lx - 12, legY + legH + walkY - 6, 14, 8);
-    });
-  } else if (state.catType === 2) { // Chaos
-    ctx.fillStyle = palette.catCheese; ctx.beginPath(); ctx.arc(0, -20, 25, 0, Math.PI*2); ctx.arc(150, 10, 40, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = palette.catWhite; ctx.beginPath(); ctx.arc(100, 30, 45, 0, Math.PI*2); ctx.arc(-40, 10, 20, 0, Math.PI*2); ctx.fill();
-  } else if (state.catType === 3) { // White pink ears
-    ctx.fillStyle = palette.blush; ctx.beginPath(); ctx.arc(-55, -45, 15, 0, Math.PI*2); ctx.arc(45, -45, 15, 0, Math.PI*2); ctx.fill();
-  } else if (state.catType === 4 || state.catType === 6) { // Stripes
-    ctx.strokeStyle = (state.catType===4)? palette.catDarkGrey : palette.ink; ctx.lineWidth = 6;
-    for(let i=0; i<=5; i++) { ctx.beginPath(); ctx.moveTo(i*25 + 40, -10); ctx.lineTo(i*25 + 25, 50); ctx.stroke(); }
-    for(let i=-1; i<=1; i++) { ctx.beginPath(); ctx.moveTo(-15 + i*15, -40); ctx.lineTo(-15 + i*18, 0); ctx.stroke(); }
+    ctx.beginPath(); ctx.ellipse(0, 35, 40, 20, 0, 0, Math.PI*2); ctx.fill(); // 배
+    ctx.beginPath(); ctx.arc(0, 10, 25, 0, Math.PI*2); ctx.fill(); // 주둥이
+  } else if (state.catType === 2) { // 카오스
+    ctx.fillStyle = palette.catCheese; ctx.beginPath(); ctx.arc(10, 0, 25, 0, Math.PI*2); ctx.arc(40, 30, 30, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = palette.catWhite; ctx.beginPath(); ctx.arc(-20, 20, 25, 0, Math.PI*2); ctx.fill();
+  } else if (state.catType === 3) { // 흰냥이 분홍 귀
+    ctx.fillStyle = palette.blush; ctx.beginPath(); ctx.arc(-30, -20, 10, 0, Math.PI*2); ctx.arc(30, -20, 10, 0, Math.PI*2); ctx.fill();
+  } else if (state.catType === 4 || state.catType === 6) { // 고등어/호랑이
+    ctx.strokeStyle = (state.catType===4)? palette.catDarkGrey : palette.ink; ctx.lineWidth = 5;
+    for(let i=0; i<=3; i++) { ctx.beginPath(); ctx.moveTo(i*20, -10); ctx.lineTo(i*20 - 10, 40); ctx.stroke(); }
   }
   ctx.restore();
 
-  // 5. Face Details
+  // 5. 하찮은 얼굴 (가운데로 몰린 작은 이목구비)
   const gaze = getGaze();
-  const eyeY = 5, eyeX = -15; // Set center of eyes
-  const gap = 30; // distance between eyes
+  const eyeY = 10, eyeX = 0; 
+  const gap = 14; // 눈 사이 좁게
   const blink = Math.max(0, 1 - state.cat.blink);
   
   if (affection > 0.1) {
     ctx.globalAlpha = affection * 0.6; ctx.fillStyle = palette.blush;
-    ctx.beginPath(); ctx.arc(eyeX - gap - 5, eyeY + 10, 12, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(eyeX + gap + 5, eyeY + 10, 12, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(eyeX - gap - 8, eyeY + 5, 8, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(eyeX + gap + 8, eyeY + 5, 8, 0, Math.PI*2); ctx.fill();
     ctx.globalAlpha = 1;
   }
 
-  // Dots for eyes
+  // 콩알 같은 눈
   ctx.fillStyle = palette.ink;
   if (blink > 0.1) {
     const pScale = 1 + affection * 0.3 + (state.payState === "approach" ? 0.3 : 0);
-    ctx.save(); ctx.translate(eyeX - gap + gaze.x*0.5, eyeY + gaze.y*0.5); ctx.scale(1, pScale);
-    ctx.beginPath(); ctx.arc(0, 0, 4.5, 0, Math.PI*2); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.translate(eyeX - gap + gaze.x*0.3, eyeY + gaze.y*0.3); ctx.scale(1, pScale);
+    ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI*2); ctx.fill(); ctx.restore(); // 눈 크기 작게
     
-    ctx.save(); ctx.translate(eyeX + gap + gaze.x*0.5, eyeY + gaze.y*0.5); ctx.scale(1, pScale);
-    ctx.beginPath(); ctx.arc(0, 0, 4.5, 0, Math.PI*2); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.translate(eyeX + gap + gaze.x*0.3, eyeY + gaze.y*0.3); ctx.scale(1, pScale);
+    ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI*2); ctx.fill(); ctx.restore();
   } else {
-    ctx.beginPath(); ctx.moveTo(eyeX-gap-5, eyeY); ctx.lineTo(eyeX-gap+5, eyeY); 
-    ctx.moveTo(eyeX+gap-5, eyeY); ctx.lineTo(eyeX+gap+5, eyeY); ctx.stroke();
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(eyeX-gap-3, eyeY); ctx.lineTo(eyeX-gap+3, eyeY); 
+    ctx.moveTo(eyeX+gap-3, eyeY); ctx.lineTo(eyeX+gap+3, eyeY); ctx.stroke();
   }
   
-  // W Mouth (floating)
-  let mY = eyeY + 15 + gaze.y, mX = eyeX + gaze.x;
+  // 하찮은 w 입
+  ctx.lineWidth = 3;
+  let mY = eyeY + 6 + gaze.y*0.5, mX = eyeX + gaze.x*0.5;
   ctx.beginPath();
-  ctx.moveTo(mX - 10, mY - 5);
-  ctx.quadraticCurveTo(mX - 5, mY + 8, mX, mY);
-  ctx.quadraticCurveTo(mX + 5, mY + 8, mX + 10, mY - 5);
+  ctx.moveTo(mX - 6, mY - 2);
+  ctx.quadraticCurveTo(mX - 3, mY + 4, mX, mY);
+  ctx.quadraticCurveTo(mX + 3, mY + 4, mX + 6, mY - 2);
   ctx.stroke();
 
-  // Whiskers (Straight lines spreading from cheeks)
+  // 대충 그린 수염 (짧고 굵게)
   ctx.beginPath();
-  ctx.moveTo(-75, eyeY + 5); ctx.lineTo(-45, eyeY + 10);
-  ctx.moveTo(-70, eyeY + 20); ctx.lineTo(-40, eyeY + 20);
-  ctx.moveTo(45, eyeY + 10); ctx.lineTo(75, eyeY + 5);
-  ctx.moveTo(40, eyeY + 20); ctx.lineTo(70, eyeY + 20);
+  ctx.moveTo(-35, eyeY); ctx.lineTo(-20, eyeY + 2);
+  ctx.moveTo(-35, eyeY + 8); ctx.lineTo(-20, eyeY + 6);
+  ctx.moveTo(35, eyeY); ctx.lineTo(20, eyeY + 2);
+  ctx.moveTo(35, eyeY + 8); ctx.lineTo(20, eyeY + 6);
   ctx.stroke();
   
-  // Sphynx wrinkles
-  if (state.catType === 5) {
-    ctx.strokeStyle = "rgba(0,0,0,0.2)";
-    ctx.beginPath(); ctx.moveTo(-30, -10); ctx.lineTo(0, -10); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(-20, 0); ctx.lineTo(10, 0); ctx.stroke();
-    ctx.strokeStyle = palette.ink;
-  }
-  
-  // Hearts
+  // 하트
   if (affection > 0.2) {
-    const t = state.time * 4; ctx.font = "28px sans-serif";
-    ctx.fillText("💕", -50 + Math.sin(t)*10, -100 - (state.time%2)*30);
-    ctx.fillText("✨", 40 + Math.cos(t)*10, -120 - ((state.time+1)%2)*30);
+    const t = state.time * 4; ctx.font = "24px sans-serif";
+    ctx.fillText("💕", -30 + Math.sin(t)*10, -60 - (state.time%2)*20);
   }
-  ctx.restore(); // Entire Cat
+  ctx.restore();
 }
 
 function drawStructure() {
@@ -659,61 +650,60 @@ function drawStructure() {
   const { hiddenX, hiddenY } = state.cat;
   ctx.save();
   ctx.translate(hiddenX, hiddenY);
-  ctx.lineWidth = 3.5;
+  ctx.lineWidth = 5; // 구조물도 굵고 투박하게
   ctx.strokeStyle = palette.ink;
 
   const type = state.structureType;
 
   if (type === 0) {
-    // 0: Cardboard Box
-    ctx.translate(-75, -50);
+    // 0: 종이상자 (대충 그린 네모)
+    ctx.translate(-50, -40);
     ctx.fillStyle = "#e0c9a6";
-    const boxPts = generateWobblyRectPoints(0, 0, 180, 140, 15);
-    const wBox = getWobble(boxPts, state.seed, 2.5);
+    const boxPts = generateWobblyRectPoints(0, 0, 140, 100, 10);
+    const wBox = getWobble(boxPts, state.seed, 4); // 많이 찌그러지게
     ctx.beginPath(); ctx.moveTo(wBox[0].x, wBox[0].y); wBox.forEach(p => ctx.lineTo(p.x, p.y)); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(15, 0); ctx.lineTo(-10, -35); ctx.lineTo(190, -35); ctx.lineTo(165, 0); ctx.stroke();
+    // 날개 부분 대충 슥슥
+    ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-20, -20); ctx.lineTo(130, -20); ctx.lineTo(120, 0); ctx.stroke();
   } 
   else if (type === 1) {
-    // 1: Telephone Pole
-    ctx.translate(-35, -350);
+    // 1: 전봇대 (삐뚤어진 기둥)
+    ctx.translate(-20, -250);
     ctx.fillStyle = "#9c9b98";
-    const polePts = generateWobblyRectPoints(0, 0, 70, 500, 5);
-    const wPole = getWobble(polePts, state.seed, 1.5);
+    const polePts = generateWobblyRectPoints(0, 0, 40, 350, 5);
+    const wPole = getWobble(polePts, state.seed, 3);
     ctx.beginPath(); ctx.moveTo(wPole[0].x, wPole[0].y); wPole.forEach(p => ctx.lineTo(p.x, p.y)); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, 150); ctx.lineTo(70, 155); ctx.moveTo(0, 280); ctx.lineTo(70, 275); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-10, 100); ctx.lineTo(50, 110); ctx.moveTo(-10, 180); ctx.lineTo(50, 170); ctx.stroke();
   }
   else if (type === 2) {
-    // 2: Car
-    ctx.translate(-200, -200);
+    // 2: 자동차 (장난감 같은 모양)
+    ctx.translate(-150, -150);
     ctx.fillStyle = "#a8dadc";
-    // Tires
+    // 타이어 찌그러지게
     ctx.fillStyle = "#333";
-    ctx.beginPath(); ctx.arc(100, 200, 45, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.arc(450, 200, 45, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-    // Body
+    const tire1 = getWobble(generateWobblyRectPoints(50, 140, 50, 50, 20), state.seed, 3);
+    const tire2 = getWobble(generateWobblyRectPoints(250, 140, 50, 50, 20), state.seed, 3);
+    ctx.beginPath(); tire1.forEach((p,i)=> i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y)); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); tire2.forEach((p,i)=> i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y)); ctx.fill(); ctx.stroke();
+    // 차체 하찮게
     ctx.fillStyle = "#a8dadc";
-    const bodyPts = generateWobblyRectPoints(0, 70, 550, 130, 20);
-    const wBody = getWobble(bodyPts, state.seed, 2);
+    const bodyPts = generateWobblyRectPoints(0, 50, 350, 100, 15);
+    const wBody = getWobble(bodyPts, state.seed, 4);
     ctx.beginPath(); ctx.moveTo(wBody[0].x, wBody[0].y); wBody.forEach(p => ctx.lineTo(p.x, p.y)); ctx.closePath(); ctx.fill(); ctx.stroke();
-    // Roof
-    const roofPts = generateWobblyRectPoints(100, 0, 320, 70, 15);
-    const wRoof = getWobble(roofPts, state.seed + 1, 2);
-    ctx.beginPath(); ctx.moveTo(wRoof[0].x, wRoof[0].y); wRoof.forEach(p => ctx.lineTo(p.x, p.y)); ctx.closePath(); ctx.fill(); ctx.stroke();
-    // Windows
+    // 창문 대충
     ctx.fillStyle = "rgba(255,255,255,0.7)";
-    ctx.beginPath(); ctx.roundRect(120, 15, 120, 55, 12); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.roundRect(280, 15, 120, 55, 12); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(50, 60, 80, 40, 10); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(150, 60, 80, 40, 10); ctx.fill(); ctx.stroke();
   }
   else if (type === 3) {
-    // 3: Trash Can
-    ctx.translate(-70, -150);
+    // 3: 쓰레기통 (찌그러진 원통)
+    ctx.translate(-50, -100);
     ctx.fillStyle = "#999999";
-    const canPts = generateWobblyRectPoints(0, 0, 140, 180, 10);
-    const wCan = getWobble(canPts, state.seed, 2);
+    const canPts = generateWobblyRectPoints(0, 0, 100, 130, 8);
+    const wCan = getWobble(canPts, state.seed, 4);
     ctx.beginPath(); ctx.moveTo(wCan[0].x, wCan[0].y); wCan.forEach(p => ctx.lineTo(p.x, p.y)); ctx.closePath(); ctx.fill(); ctx.stroke();
-    // Corrugated lines
-    for(let i=25; i<=115; i+=30) {
-      ctx.beginPath(); ctx.moveTo(i, 15); ctx.lineTo(i, 165); ctx.stroke();
+    // 주름 대충 긋기
+    for(let i=20; i<=80; i+=25) {
+      ctx.beginPath(); ctx.moveTo(i, 20); ctx.lineTo(i, 110); ctx.stroke();
     }
   }
 
@@ -801,8 +791,8 @@ function render() {
   }
   
   if (state.isCatPresent) {
-    drawCat();
-    drawStructure();
+    drawStructure(); // Draw structure first
+    drawCat();       // Then draw cat (so it can peek out or be on top)
     drawChuru();
   } else {
     // Empty alley: maybe draw a tiny tumbleweed or just empty space
@@ -831,8 +821,8 @@ function resize() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   state.cat.baseX = window.innerWidth * 0.5;
   state.cat.baseY = window.innerHeight * 0.55;
-  state.cat.hiddenX = window.innerWidth * 0.85;
-  state.cat.hiddenY = window.innerHeight * 0.45;
+  state.cat.hiddenX = window.innerWidth * 0.75; // More visible peek position
+  state.cat.hiddenY = window.innerHeight * 0.5;
   state.churu.x = window.innerWidth * 0.5;
   state.churu.y = window.innerHeight * 0.85;
   if(state.stage === "hidden") {
@@ -845,26 +835,31 @@ async function recordFeedAndFetchRank() {
   if (!currentUser) return;
   state.isChatDisabled = true;
   
-  await supabase.from('feed_logs').insert([
-    { user_id: currentUser.id, cat_type: state.catType }
-  ]);
-  
-  const { data: leaderboard } = await supabase.from('cat_leaderboard')
-    .select('*')
-    .eq('cat_type', state.catType)
-    .order('rank', { ascending: true });
+  try {
+    await supabase.from('feed_logs').insert([
+      { user_id: currentUser.id, cat_type: state.catType }
+    ]);
     
-  if (leaderboard) {
-    const myRankEntry = leaderboard.find(r => r.user_id === currentUser.id);
-    if (myRankEntry) {
-      const catName = catNames[state.catType] || "고양이";
-      state.systemMessage = `🎉 축하합니다! ${catName}에게 ${myRankEntry.rank}번째로 마음을 얻었습니다!`;
-      state.systemMessageTimer = 6;
-      updateLeaderboardUI(leaderboard);
-      rankingContainer.classList.remove("hidden");
+    const { data: leaderboard } = await supabase.from('cat_leaderboard')
+      .select('*')
+      .eq('cat_type', state.catType)
+      .order('rank', { ascending: true });
+      
+    if (leaderboard) {
+      const myRankEntry = leaderboard.find(r => r.user_id === currentUser.id);
+      if (myRankEntry) {
+        const catName = catNames[state.catType] || "고양이";
+        state.systemMessage = `🎉 축하합니다! ${catName}에게 ${myRankEntry.rank}번째로 마음을 얻었습니다!`;
+        state.systemMessageTimer = 6;
+        updateLeaderboardUI(leaderboard);
+        rankingContainer.classList.remove("hidden");
+      }
+    } else {
+      emitSystemMsg("고양이가 무척 행복해 보입니다!");
     }
-  } else {
-    emitSystemMsg("고양이가 무척 행복해 보입니다!");
+  } catch (e) {
+    console.error("Supabase record error:", e);
+    emitSystemMsg("고양이가 츄르를 맛있게 먹었습니다!");
   }
   state.isChatDisabled = false;
 }
@@ -887,18 +882,25 @@ function showRanking() {
   rankingList.innerHTML = "<li>로딩 중...</li>";
   rankingContainer.classList.remove("hidden");
   
-  supabase.from('cat_leaderboard')
-    .select('*')
-    .eq('cat_type', state.catType)
-    .order('rank', { ascending: true })
-    .limit(10)
-    .then(({ data }) => {
-      if (data && data.length > 0) {
-        updateLeaderboardUI(data);
-      } else {
-        rankingList.innerHTML = "<li>아직 이 고양이에게 츄르를 준 닝겐이 없습니다!</li>";
-      }
-    });
+  try {
+    supabase.from('cat_leaderboard')
+      .select('*')
+      .eq('cat_type', state.catType)
+      .order('rank', { ascending: true })
+      .limit(10)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          updateLeaderboardUI(data);
+        } else {
+          rankingList.innerHTML = "<li>아직 이 고양이에게 츄르를 준 닝겐이 없습니다!</li>";
+        }
+      }).catch(e => {
+        console.error("Ranking fetch error:", e);
+        rankingList.innerHTML = "<li>랭킹 정보를 불러올 수 없습니다.</li>";
+      });
+  } catch (e) {
+    rankingList.innerHTML = "<li>랭킹 시스템 점검 중입니다.</li>";
+  }
 }
 
 window.addEventListener("resize", resize);
